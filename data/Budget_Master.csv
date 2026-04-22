@@ -1,0 +1,8 @@
+stage_id,stage_name,category,budgeted_unit_cost,target_efficiency_rate
+1,Casting,Input,2.25,0.97
+2,Machining,Processing,3.17,0.92
+3,Assembly,Processing,2.51,0.94
+4,Coating,Processing,1.06,0.99
+5,Finishing,Processing,2.91,0.93
+6,QA,Inspection,1.59,0.98
+7,Packaging,Output,1.59,0.98
