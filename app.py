@@ -171,13 +171,13 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 @st.cache_data
 def load_data():
-    ac = pd.read_csv(f"{DATA_DIR}/Actual_Costs.csv")
-    bm = pd.read_csv(f"{DATA_DIR}/Budget_Master.csv")
-    dt = pd.read_csv(f"{DATA_DIR}/Date.csv")
-    mc = pd.read_csv(f"{DATA_DIR}/Machines.csv")
-    pl = pd.read_csv(f"{DATA_DIR}/Production_Logs.csv")
-    rr = pd.read_csv(f"{DATA_DIR}/Rework_Registry.csv")
-    sh = pd.read_csv(f"{DATA_DIR}/Shifts.csv")
+    ac = pd.read_csv(Actual_Costs.csv")
+    bm = pd.read_csv(Budget_Master.csv")
+    dt = pd.read_csv(Date.csv")
+    mc = pd.read_csv(Machines.csv")
+    pl = pd.read_csv(Production_Logs.csv")
+    rr = pd.read_csv(Rework_Registry.csv")
+    sh = pd.read_csv(Shifts.csv")
 
     dt["date"] = pd.to_datetime(dt["date"])
     dt["date_key"] = dt["date_key"].astype(int)
