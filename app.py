@@ -169,112 +169,22 @@ def alert(msg, kind="blue"):
 # ─────────────────────────────────────────────────────────────────────
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
-
-def generate_sample_data():
-    """Generate realistic sample manufacturing data when CSV files are not found."""
-    np.random.seed(42)
-
-    # --- Date ---
-    dates = pd.date_range("2023-01-01", "2024-12-31", freq="W")
-    dt = pd.DataFrame({
-        "date_key": range(1, len(dates)+1),
-        "date":     dates,
-        "year":     dates.year,
-        "quarter":  dates.quarter,
-    })
-
-    # --- Stages / Budget Master ---
-    stages = [
-        ("S1","Casting",        420),
-        ("S2","Machining",      680),
-        ("S3","Heat Treatment", 310),
-        ("S4","Assembly",       520),
-        ("S5","Quality Check",  190),
-    ]
-    bm = pd.DataFrame(stages, columns=["stage_id","stage_name","budgeted_unit_cost"])
-
-    # --- Machines ---
-    machines = []
-    for i, line in enumerate(["Line A","Line B","Line C"]):
-        for j in range(4):
-            machines.append({"machine_id": f"M{i*4+j+1:02d}", "production_line": line,
-                              "machine_name": f"{line}-Machine-{j+1}"})
-    mc = pd.DataFrame(machines)
-
-    # --- Shifts ---
-    sh = pd.DataFrame([
-        {"shift_id":"SH1","shift_name":"Morning Shift"},
-        {"shift_id":"SH2","shift_name":"Afternoon Shift"},
-        {"shift_id":"SH3","shift_name":"Night Shift"},
-    ])
-
-    # --- Actual Costs ---
-    ac_rows = []
-    for dk in dt["date_key"]:
-        for sid in bm["stage_id"]:
-            base = bm.loc[bm["stage_id"]==sid,"budgeted_unit_cost"].values[0]
-            ac_rows.append({
-                "date_key":      dk,
-                "stage_id":      sid,
-                "material_cost": base * np.random.uniform(18, 28),
-                "utility_cost":  base * np.random.uniform(3, 7),
-                "payroll_hours": np.random.uniform(40, 120),
-            })
-    ac = pd.DataFrame(ac_rows)
-
-    # --- Production Logs ---
-    pl_rows = []
-    for dk in dt["date_key"]:
-        for mid in mc["machine_id"]:
-            for shid in sh["shift_id"]:
-                for sid in bm["stage_id"]:
-                    units = int(np.random.uniform(50, 200))
-                    scrap = int(units * np.random.uniform(0.02, 0.12))
-                    pl_rows.append({
-                        "date_key":      dk,
-                        "machine_id":    mid,
-                        "shift_id":      shid,
-                        "stage_id":      sid,
-                        "units_produced":units,
-                        "scrap_count":   scrap,
-                    })
-    pl = pd.DataFrame(pl_rows)
-
-    # --- Rework Registry ---
-    reasons = ["Dimensional Error","Surface Defect","Material Fault","Weld Crack","Misalignment"]
-    rr_rows = []
-    for dk in dt["date_key"]:
-        for sid in bm["stage_id"]:
-            if np.random.random() > 0.4:
-                rr_rows.append({
-                    "date_key":       dk,
-                    "stage_id":       sid,
-                    "rework_reason":  np.random.choice(reasons),
-                    "parts_cost_lost":np.random.uniform(500, 8000),
-                    "man_hours_lost": np.random.uniform(1, 12),
-                })
-    rr = pd.DataFrame(rr_rows)
-
-    return ac, bm, dt, mc, pl, rr, sh
-
 @st.cache_data
 def load_data():
-    try:
-        ac = pd.read_csv(f"{DATA_DIR}/Actual_Costs.csv")
-        bm = pd.read_csv(f"{DATA_DIR}/Budget_Master.csv")
-        dt = pd.read_csv(f"{DATA_DIR}/Date.csv")
-        mc = pd.read_csv(f"{DATA_DIR}/Machines.csv")
-        pl = pd.read_csv(f"{DATA_DIR}/Production_Logs.csv")
-        rr = pd.read_csv(f"{DATA_DIR}/Rework_Registry.csv")
-        sh = pd.read_csv(f"{DATA_DIR}/Shifts.csv")
-        dt["date"] = pd.to_datetime(dt["date"])
-        dt["date_key"] = dt["date_key"].astype(int)
-        for df in [ac, pl, rr]:
-            df["date_key"] = df["date_key"].astype(int)
-        return ac, bm, dt, mc, pl, rr, sh
-    except FileNotFoundError:
-        st.sidebar.info("📊 Using sample data — upload a `data/` folder with CSVs to use real data.")
-        return generate_sample_data()
+    ac = pd.read_csv(f"{DATA_DIR}/Actual_Costs.csv")
+    bm = pd.read_csv(f"{DATA_DIR}/Budget_Master.csv")
+    dt = pd.read_csv(f"{DATA_DIR}/Date.csv")
+    mc = pd.read_csv(f"{DATA_DIR}/Machines.csv")
+    pl = pd.read_csv(f"{DATA_DIR}/Production_Logs.csv")
+    rr = pd.read_csv(f"{DATA_DIR}/Rework_Registry.csv")
+    sh = pd.read_csv(f"{DATA_DIR}/Shifts.csv")
+
+    dt["date"] = pd.to_datetime(dt["date"])
+    dt["date_key"] = dt["date_key"].astype(int)
+    for df in [ac, pl, rr]:
+        df["date_key"] = df["date_key"].astype(int)
+
+    return ac, bm, dt, mc, pl, rr, sh
 
 ac, bm, dt, mc, pl, rr, sh = load_data()
 
