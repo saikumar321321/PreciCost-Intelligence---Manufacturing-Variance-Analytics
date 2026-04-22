@@ -853,13 +853,21 @@ elif page == "🗺️ Stage Heatmap":
     df_hm = pd.DataFrame(hm_data)
     pivot = df_hm.pivot(index="Stage", columns="Shift", values="Variance %")
 
+    # ── HIGH-CONTRAST color scale ──────────────────────────────────────
+    # Deep teal/blue for strongly under budget  →  white/light for near zero
+    # → bright amber for slightly over  →  vivid red  →  deep crimson for extreme over
     colorscale = [
-        [0.00, "#1a4731"],
-        [0.35, "#3fb950"],
-        [0.50, "#d29922"],
-        [0.65, "#f85149"],
-        [1.00, "#8b1a1a"],
+        [0.00, "#0d47a1"],   # deep blue   → very under budget (≤ -300%)
+        [0.20, "#1976d2"],   # medium blue → moderately under
+        [0.38, "#4fc3f7"],   # sky blue    → slightly under
+        [0.48, "#e0f7fa"],   # near-white  → near zero (just under)
+        [0.52, "#fff9c4"],   # pale yellow → near zero (just over)
+        [0.62, "#ffb300"],   # amber       → 0–100% over
+        [0.75, "#e53935"],   # vivid red   → 100–200% over
+        [0.88, "#b71c1c"],   # deep red    → 200–300% over
+        [1.00, "#4a0000"],   # near-black  → extreme over (≥ 300%)
     ]
+
     z_vals = pivot.values
     x_labs = pivot.columns.tolist()
     y_labs = pivot.index.tolist()
@@ -868,34 +876,69 @@ elif page == "🗺️ Stage Heatmap":
     for i, yl in enumerate(y_labs):
         for j, xl in enumerate(x_labs):
             val = z_vals[i][j]
-            if np.isnan(val): continue
-            fc = "#f85149" if val > 10 else ("#d29922" if val > 0 else "#3fb950")
+            if np.isnan(val):
+                continue
+            # Text color: white on dark backgrounds, dark on light backgrounds
+            if val <= -50:
+                txt_color = "#ffffff"   # white on deep blue
+            elif val <= 5:
+                txt_color = "#0d1117"   # dark on pale/light cells
+            elif val <= 80:
+                txt_color = "#1a1a1a"   # dark on amber
+            else:
+                txt_color = "#ffffff"   # white on red/crimson
+
             annotations.append(dict(
                 x=xl, y=yl,
                 text=f"<b>{val:+.1f}%</b>",
-                font=dict(size=14, color=fc),
+                font=dict(size=14, color=txt_color),
                 showarrow=False
             ))
 
     fig_hm = go.Figure(go.Heatmap(
         z=z_vals, x=x_labs, y=y_labs,
-        colorscale=colorscale, zmid=0,
+        colorscale=colorscale,
+        zmid=0,
+        zmin=-300,
+        zmax=300,
         text=[[f"{v:+.1f}%" for v in row] for row in z_vals],
         hovertemplate="Stage: <b>%{y}</b><br>Shift: <b>%{x}</b><br>Variance: <b>%{text}</b><extra></extra>",
         colorbar=dict(
-            title=dict(text="Variance %", font=dict(color="#c9d1d9")),
+            title=dict(text="Variance %", font=dict(color="#c9d1d9", size=13)),
             tickfont=dict(color="#c9d1d9"),
-            bgcolor="#161b22", bordercolor="#30363d"
+            tickvals=[-300, -200, -100, 0, 100, 200, 300],
+            ticktext=["-300%", "-200%", "-100%", "0%", "+100%", "+200%", "+300%"],
+            bgcolor="#161b22",
+            bordercolor="#30363d",
+            thickness=18,
         )
     ))
+
     fig_hm.update_layout(
-        paper_bgcolor="#0d1117", font=dict(color="#c9d1d9", family="Segoe UI"),
-        xaxis=dict(title="Shift",  tickfont=dict(color="#c9d1d9", size=13), side="bottom"),
-        yaxis=dict(title="Stage",  tickfont=dict(color="#c9d1d9", size=13), autorange="reversed"),
+        paper_bgcolor="#0d1117",
+        plot_bgcolor="#0d1117",
+        font=dict(color="#c9d1d9", family="Segoe UI"),
+        xaxis=dict(
+            title="Shift",
+            tickfont=dict(color="#c9d1d9", size=13),
+            side="bottom",
+            showgrid=False,
+        ),
+        yaxis=dict(
+            title="Stage",
+            tickfont=dict(color="#c9d1d9", size=13),
+            autorange="reversed",
+            showgrid=False,
+        ),
         annotations=annotations,
-        height=480, margin=dict(l=160,r=60,t=60,b=60),
-        title=dict(text="Variance % by Stage × Shift", font=dict(color="#f0f6fc",size=15))
+        height=480,
+        margin=dict(l=160, r=80, t=60, b=60),
+        title=dict(
+            text="Variance % by Stage × Shift",
+            font=dict(color="#f0f6fc", size=15)
+        )
     )
+
     st.plotly_chart(fig_hm, use_container_width=True)
 
     # ── Machine × Shift Production Volume ─────────────────────────────
